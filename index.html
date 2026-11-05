@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Online HTML- &amp; CSS-Editor</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.1.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.45.2/src-min-noconflict/ace.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.45.2/src-min-noconflict/ext-language_tools.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.45.2/src-min-noconflict/ext-beautify.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.2/dist/jszip.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400;1,700&family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark"><i class="fa-solid fa-code" aria-hidden="true"></i></span><span>Webeditor</span></div>
+    
+    <div class="toolbar">
+      <label class="project-title-wrap" for="projectTitle"><span class="project-title-label">Projektname: </span><input id="projectTitle" class="project-title-input" type="text" value="Webseitenprojekt" maxlength="80" placeholder="Projekttitel" aria-label="Projekttitel"></label>
+	  <button id="runButton" class="button button-primary"><i class="fa-solid fa-play" aria-hidden="true"></i> Vorschau</button>
+      <button id="downloadZip" class="button"><i class="fa-solid fa-file-zipper" aria-hidden="true"></i> Projekt als ZIP downloaden</button>
+      <button id="resetButton" class="button"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Zurücksetzen</button>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <main class="workspace">
+      <section class="editors">
+        <section class="editor-panel" id="htmlPanel">
+          <div class="panel-header">
+            <span class="panel-title">HTML</span><span class="panel-meta">index.html</span>
+            <button class="panel-button format-button" data-format="html" title="HTML-Code aufräumen"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>
+            <button class="panel-button download-button" id="downloadHtml" title="HTML-Datei herunterladen"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
+            <button class="panel-button collapse-button" data-collapse="html" aria-expanded="true" title="HTML-Editor einklappen"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
+          </div>
+          <div id="htmlEditor" class="ace-editor"></div>
+        </section>
+        <section class="editor-panel" id="cssPanel">
+          <div class="panel-header">
+            <span class="panel-title">CSS</span><span class="panel-meta">style.css</span>
+            <button class="panel-button format-button" data-format="css" title="CSS-Code aufräumen"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>
+            <button class="panel-button download-button" id="downloadCss" title="CSS-Datei herunterladen"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
+            <button class="panel-button collapse-button" data-collapse="css" aria-expanded="true" title="CSS-Editor einklappen"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
+          </div>
+          <div id="cssEditor" class="ace-editor"></div>
+        </section>
+        <section class="editor-panel collapsed" id="jsPanel">
+          <div class="panel-header">
+            <span class="panel-title">JavaScript</span><span class="panel-meta">script.js</span>
+            <button class="panel-button format-button" data-format="js" title="JS-Code aufräumen"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i></button>
+            <button class="panel-button download-button" id="downloadJs" title="JavaScript-Datei herunterladen"><i class="fa-solid fa-download" aria-hidden="true"></i></button>
+            <button class="panel-button collapse-button" data-collapse="js" aria-expanded="false" title="JavaScript-Editor ausklappen"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+          </div>
+          <div id="jsEditor" class="ace-editor"></div>
+        </section>
+      </section>
+      <section class="preview-panel" id="previewPanel">
+        <div class="panel-header"><span class="panel-title">Vorschau</span><span id="previewStatus" class="status">Aktuell</span><button id="refreshPreview" class="panel-button" title="Vorschau aktualisieren"><i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i></button></div>
+        <iframe id="previewFrame" title="Live-Vorschau" sandbox="allow-scripts"></iframe>
+      </section>
+    </main>
+  </div>
+  
+  <footer class="statusbar"><span id="saveStatus">Änderungen werden lokal gespeichert</span></footer>
+  
+  <script src="app.js"></script>
+</body>
+</html>
