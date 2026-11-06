@@ -1,0 +1,227 @@
+(() => {
+	"use strict";
+
+	// Start-HTML (HTML-Grundgerüst als Vorlage beim Start)
+	const START_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Meine erste Webseite</title>
+	<link rel="stylesheet" href="style.css">
+	<script src="script.js"></script>
+</head>
+<body>
+	<!-- Dein Quelltext beginnt hier -->
+	<h1>Hallo Welt!</h1>
+	<p>Willkommen auf meiner ersten Webseite.</p>
+</body>
+</html>`;
+
+	// Start-CSS (CSS-Grundgerüst als Vorlage beim Start)
+	const START_CSS = `/* Gestalte hier deine Webseite */
+body {
+	font-family: Arial, sans-serif;
+	margin: 1rem;
+	background-color: #ffffff;
+}
+
+h1 {
+	color: #ff0000;
+}`;
+
+	// Start-JavaScript (Beispiel-Befehl zum Start)
+	const START_JS = `// Mache hier deine Webseite interaktiv
+console.log("Hallo JavaScript!");`;
+
+	const editors = {};
+	// Voreinstellungen des ACE-Editors (siehe https://github.com/ajaxorg/ace/wiki/Configuring-Ace)
+	const setupEditor = (id, mode, initial) => {
+		const editor = ace.edit(id);
+		editor.setTheme("ace/theme/chrome");
+		editor.session.setMode(`ace/mode/${mode}`);
+		editor.setValue(initial, -1);
+		editor.setOptions({
+			fontSize: "14px",
+			showPrintMargin: false,
+			enableAutoIndent: true,
+			useSoftTabs: false,
+			tabSize: 4,
+			enableBasicAutocompletion: true,
+			enableLiveAutocompletion: true,
+			enableSnippets: true,
+			wrap: false
+		});
+		editor.session.setUseWorker(false);
+		return editor;
+	};
+
+	// Erzeuge drei Editorfenster mit den jeweiligen Startwerten
+	editors.html = setupEditor("htmlEditor", "html", START_HTML);
+	editors.css = setupEditor("cssEditor", "css", START_CSS);
+	editors.js = setupEditor("jsEditor", "javascript", START_JS);
+
+	const frame = document.getElementById("previewFrame");
+	const status = document.getElementById("previewStatus");
+	const saveStatus = document.getElementById("saveStatus");
+	const storageKey = "webeditor";
+	const projectTitleInput = document.getElementById("projectTitle");
+	const projectTitleStorageKey = "webeditor-project";
+
+	// Hole dir den Inhalt aller drei Editoren
+	function getCode() {
+		return {
+			html: editors.html.getValue(),
+			css: editors.css.getValue(),
+			js: editors.js.getValue()
+		};
+	}
+
+	// Erzeuge die Vorschau
+	function createPreviewDocument() {
+		const code = getCode();
+		// Bette für die Vorschau den CSS- und JavaScript-Code direkt ein
+		const css = code.css.replace(/<\/style/gi, "<\\/style");
+		const js = code.js.replace(/<\/script/gi, "<\\/script");
+		let html = code.html;
+		const styleTag = `<style>\n${css}\n</style>`;
+		const scriptTag = `<script>\n${js}\n<\/script>`;
+		if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, `${styleTag}\n</head>`);
+		else html = `${styleTag}\n${html}`;
+		if (/<\/body>/i.test(html)) html = html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
+		else html += `\n${scriptTag}`;
+		return html;
+	}
+
+	// Aktualisiere die Vorschau (inkl. Statusanzeige)
+	function updatePreview() {
+		frame.srcdoc = createPreviewDocument();
+		status.textContent = "Aktualisiere...";
+		window.setTimeout(() => { status.textContent = "Aktuell"; }, 1000);
+	}
+
+	// Speichere die Editor-Inhalte im lokalen Browserspeicher
+	function saveLocally() {
+		try {
+			localStorage.setItem(storageKey, JSON.stringify(getCode()));
+			localStorage.setItem(projectTitleStorageKey, projectTitleInput.value);
+			saveStatus.textContent = "Der Inhalt wurde lokal gespeichert.";
+		} catch (error) {
+			saveStatus.textContent = "Der lokale Speicher ist nicht verfügbar!";
+		}
+	}
+
+	// Lade Inhalte aus lokalem Speicher
+	function loadLocally() {
+		try {
+			const savedTitle = localStorage.getItem(projectTitleStorageKey);
+			if (savedTitle) projectTitleInput.value = savedTitle;
+			const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+			if (saved && typeof saved.html === "string" && typeof saved.css === "string" && typeof saved.js === "string") {
+				editors.html.setValue(saved.html, -1);
+				editors.css.setValue(saved.css, -1);
+				editors.js.setValue(saved.js, -1);
+			}
+		} catch (_) { /* ignoriere fehlerhafte lokale Speicherung */ }
+	}
+
+	let updateTimer;
+	Object.values(editors).forEach(editor => editor.session.on("change", () => {
+		saveLocally();
+		clearTimeout(updateTimer);
+		updateTimer = setTimeout(updatePreview, 350);
+	}));
+
+	// Belege Vorschau/Aktualisieren-Buttons mit Funktion
+	document.getElementById("runButton").addEventListener("click", updatePreview);
+	document.getElementById("refreshPreview").addEventListener("click", updatePreview);
+
+	// Mache einzelne Editoren zusammenklappbar
+	document.querySelectorAll("[data-collapse]").forEach(button => {
+		button.addEventListener("click", () => {
+			const name = button.dataset.collapse;
+			const panel = document.getElementById(`${name}Panel`);
+			const collapsed = panel.classList.toggle("collapsed");
+			button.setAttribute("aria-expanded", String(!collapsed));
+			button.title = collapsed ? `${name.toUpperCase()}-Editor ausklappen` : `${name.toUpperCase()}-Editor einklappen`;
+			button.innerHTML = collapsed
+				? '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
+				: '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
+			window.setTimeout(() => Object.values(editors).forEach(editor => editor.resize()), 220);
+		});
+	});
+
+	// Bereite Download einzelner Scripte vor
+	function downloadFile(name, content, type = "text/plain;charset=utf-8") {
+		const blob = new Blob([content], {type});
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = name;
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
+		URL.revokeObjectURL(url);
+	}
+
+	// Belege Download-Buttons mit Funktion
+	document.getElementById("downloadHtml").addEventListener("click", () => downloadFile("index.html", getCode().html, "text/html;charset=utf-8"));
+	document.getElementById("downloadCss").addEventListener("click", () => downloadFile("style.css", getCode().css, "text/css;charset=utf-8"));
+	document.getElementById("downloadJs").addEventListener("click", () => downloadFile("script.js", getCode().js, "text/javascript;charset=utf-8"));
+
+	// Erzeuge Projekt als ZIP-Datei (mit JSZip)
+	document.getElementById("downloadZip").addEventListener("click", async () => {
+		// Prüfe, ob JSZip geladen wurde
+		if (typeof JSZip === "undefined") {
+			alert("Die ZIP-Bibliothek konnte nicht geladen werden.");
+			return;
+		}
+		// Hole die Editorinhalte und erzeuge aus ihnen drei Dateien
+		const code = getCode();
+		const zip = new JSZip();
+		zip.file("index.html", code.html);
+		zip.file("style.css", code.css);
+		zip.file("script.js", code.js);
+		// Verwende den Projektnamen als Dateinamen
+		const projectTitle = projectTitleInput.value.trim() || "Webseitenprojekt";
+		const safeFileName = projectTitle
+			.normalize("NFKD")
+			.replace(/[\u0300-\u036f]/g, "")
+			.replace(/[^a-zA-Z0-9_-]+/g, "-")
+			.replace(/^-+|-+$/g, "")
+			.slice(0, 80) || "Webseitenprojekt";
+		const blob = await zip.generateAsync({type: "blob"});
+		downloadFile(`${safeFileName}.zip`, blob, "application/zip");
+	});
+
+	// Nutze die Beautify-Extension, um Code aufzuräumen
+	// Belege die Aufräumen-Buttons mit Funktion.
+	document.querySelectorAll("[data-format]").forEach(button => {
+		button.addEventListener("click", () => {
+			const editor = editors[button.dataset.format];
+			try {
+				const beautify = ace.require("ace/ext/beautify");
+				beautify.beautify(editor.session);
+			} catch (_) {
+				alert("Die Aufräumen-Funktion steht aktuell nicht zur Verfügung.");
+			}
+		});
+	});
+
+	// Belege den Zurücksetzen-Button mit Funktion
+	document.getElementById("resetButton").addEventListener("click", () => {
+		if (!confirm("Wollen Sie wirklich alle drei Editorfenster auf den Ausgangszustand zurücksetzen?")) return;
+		// Defaultwerte erneut laden
+		editors.html.setValue(START_HTML, -1);
+		editors.css.setValue(START_CSS, -1);
+		editors.js.setValue(START_JS, -1);
+		// Lokalen Speicher überschreiben und Vorschau aktualisieren
+		saveLocally();
+		updatePreview();
+	});
+
+	projectTitleInput.addEventListener("input", saveLocally);
+	loadLocally();
+	updatePreview();
+	window.addEventListener("resize", () => Object.values(editors).forEach(editor => editor.resize()));
+})();
