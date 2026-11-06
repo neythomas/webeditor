@@ -36,7 +36,7 @@ console.log("Hallo JavaScript!");`;
 
 	const editors = {};
 
-	// Voreinstellungen des ACE-Editors (siehe https://github.com/ajaxorg/ace/wiki/Configuring-Ace)
+	// Voreinstellungen des ACE-Editors
 	const setupEditor = (id, mode, initial) => {
 		const editor = ace.edit(id);
 		editor.setTheme("ace/theme/chrome");
@@ -53,6 +53,7 @@ console.log("Hallo JavaScript!");`;
 			enableSnippets: true,
 			wrap: false
 		});
+
 		// Falls Ladefehler in der Konsole erscheinen: WebWorker deaktivieren (deaktiviert auch Syntax-Prüfung!)
 		// editor.session.setUseWorker(false);
 
@@ -70,6 +71,7 @@ console.log("Hallo JavaScript!");`;
 	const storageKey = "webeditor";
 	const projectTitleInput = document.getElementById("projectTitle");
 	const projectTitleStorageKey = "webeditor-project";
+	const editorLayoutStorageKey = "webeditor-layout";
 
 	// Debounce-Timer für lokales Speichern und Vorschauaktualisierung
 	let debounceTimer;
@@ -102,16 +104,18 @@ console.log("Hallo JavaScript!");`;
 		const styleTag = `<style>\n${css}\n</style>`;
 		const scriptTag = `<script>\n${js}\n<\/script>`;
 
+		// Falls </head> vorhanden: CSS davor setzen, ansonsten an den Anfang
 		if (/<\/head>/i.test(html)) {
-			html = html.replace(/<\/head>/i, `${styleTag}\n</head>`);	// Falls </head> vorhanden: Füge CSS davor ein
+			html = html.replace(/<\/head>/i, `${styleTag}\n</head>`);
 		} else {
-			html = `${styleTag}\n${html}`;	// Sonst: Am Dokumentenanfang
+			html = `${styleTag}\n${html}`;
 		}
 
+		// Falls </body> vorhanden: JS davor setzen, ansonsten ans Ende
 		if (/<\/body>/i.test(html)) {
-			html = html.replace(/<\/body>/i, `${scriptTag}\n</body>`);	// Falls </body> vorhanden: Füge JS davor ein
+			html = html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
 		} else {
-			html += `\n${scriptTag}`;		// Sonst: Am Dokumentenende
+			html += `\n${scriptTag}`;
 		}
 
 		return html;
@@ -133,7 +137,7 @@ console.log("Hallo JavaScript!");`;
 		try {
 			localStorage.setItem(storageKey, JSON.stringify(getCode()));
 			localStorage.setItem(projectTitleStorageKey, projectTitleInput.value);
-			saveStatus.textContent = "Der Inhalt wurde lokal gespeichert.";
+			saveStatus.textContent = "Änderungen lokal gespeichert";
 		} catch {
 			saveStatus.textContent = "Der lokale Speicher ist nicht verfügbar!";
 		}
@@ -144,27 +148,34 @@ console.log("Hallo JavaScript!");`;
 		try {
 			const savedTitle = localStorage.getItem(projectTitleStorageKey);
 
-			if (savedTitle !== null) projectTitleInput.value = savedTitle;
+			if (savedTitle !== null) { projectTitleInput.value = savedTitle; }
 
 			const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
 
-			if (saved && typeof saved.html === "string" && typeof saved.css === "string" && typeof saved.js === "string") {
+			if (saved && typeof saved.html === "string" && typeof saved.css === "string" && typeof saved.js === "string" ) {
 				editors.html.setValue(saved.html, -1);
 				editors.css.setValue(saved.css, -1);
 				editors.js.setValue(saved.js, -1);
 			}
-		} catch { } // Ignoriere fehlerhafte lokale Speicherung
+		} catch {
+			// Ignoriere fehlerhafte lokale Speicherung
+		}
 	}
 
-	// Nach 500ms ohne Änderung: lokal speichern und Vorschau aktualisieren (Debounce-Timer)
+	// Wartezeit nach letzter Änderung für die Auto-Speicherung
+	const SAVE_DELAY = 500;
+	
+	// Nach 500ms ohne Änderung: lokal speichern und Vorschau aktualisieren (Debounce)
 	Object.values(editors).forEach(editor => {
 		editor.session.on("change", () => {
+			// Änderungen kennzeichnen, bis die automatische Speicherung erfolgt
+			saveStatus.textContent = "Ungespeicherte Änderungen";
 			window.clearTimeout(debounceTimer);
 
 			debounceTimer = window.setTimeout(() => {
 				saveLocally();
 				updatePreview();
-			}, 500);
+			}, SAVE_DELAY);
 		});
 	});
 
@@ -172,15 +183,85 @@ console.log("Hallo JavaScript!");`;
 	document.getElementById("runButton").addEventListener("click", updatePreview);
 	document.getElementById("refreshPreview").addEventListener("click", updatePreview);
 
+	// Speichere den Zustand (zugeklappt/geöffnet) aller Editoren lokal
+	function saveEditorLayout() {
+		try {
+			const layout = {};
+
+			document.querySelectorAll("[data-collapse]").forEach(button => {
+				const name = button.dataset.collapse;
+				const panel = document.getElementById(`${name}Panel`);
+				layout[name] = panel.classList.contains("collapsed");
+			});
+
+			localStorage.setItem(editorLayoutStorageKey, JSON.stringify(layout));
+		} catch {
+			// Ignoriere Fehler beim lokalen Speichern des Layouts
+		}
+	}
+
+	// Stelle den zuletzt gespeicherten Zustand der Editoren wieder her
+	function loadEditorLayout() {
+		try {
+			const savedLayout = JSON.parse(
+				localStorage.getItem(editorLayoutStorageKey) || "null"
+			);
+
+			if (!savedLayout || typeof savedLayout !== "object") {
+				return;
+			}
+
+			document.querySelectorAll("[data-collapse]").forEach(button => {
+				const name = button.dataset.collapse;
+
+				if (typeof savedLayout[name] !== "boolean") {
+					return;
+				}
+
+				const collapsed = savedLayout[name];
+				const panel = document.getElementById(`${name}Panel`);
+
+				panel.classList.toggle("collapsed", collapsed);
+				button.setAttribute("aria-expanded", String(!collapsed));
+
+				button.title = collapsed
+					? `${name.toUpperCase()}-Editor ausklappen`
+					: `${name.toUpperCase()}-Editor einklappen`;
+
+				button.innerHTML = collapsed
+					? '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
+					: '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
+			});
+		} catch {
+			// Ignoriere fehlerhafte lokale Layout-Speicherung
+		}
+
+		Object.values(editors).forEach(editor => editor.resize());
+	}
+
+	// Lade gespeicherten Editorzustand (vor der Registrierung der Klick-Handler)
+	loadEditorLayout();
+
 	// Mache einzelne Editoren zusammenklappbar
 	document.querySelectorAll("[data-collapse]").forEach(button => {
 		button.addEventListener("click", () => {
 			const name = button.dataset.collapse;
 			const panel = document.getElementById(`${name}Panel`);
 			const collapsed = panel.classList.toggle("collapsed");
+
 			button.setAttribute("aria-expanded", String(!collapsed));
-			button.title = collapsed ? `${name.toUpperCase()}-Editor ausklappen` : `${name.toUpperCase()}-Editor einklappen`;
-			button.innerHTML = collapsed ? '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>' : '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
+
+			button.title = collapsed
+				? `${name.toUpperCase()}-Editor ausklappen`
+				: `${name.toUpperCase()}-Editor einklappen`;
+
+			button.innerHTML = collapsed
+				? '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
+				: '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
+
+			// Zustand der Editoren im localStorage sichern
+			saveEditorLayout();
+
 			window.setTimeout(() => {
 				Object.values(editors).forEach(editor => editor.resize());
 			}, 200);
@@ -192,19 +273,22 @@ console.log("Hallo JavaScript!");`;
 		const blob = new Blob([content], { type });
 		const url = URL.createObjectURL(blob);
 		const link = document.createElement("a");
+
 		link.href = url;
 		link.download = name;
+
 		document.body.appendChild(link);
 		link.click();
 		link.remove();
-		// Warte kurz, bis die URL widerrufen wird (um ein Widerrufen vor Beginn des Downloads zu vermeiden)
+
+		// Warte kurz, bis die URL widerrufen wird
 		window.setTimeout(() => {
 			URL.revokeObjectURL(url);
 		}, 1000);
 	}
 
 	// Belege Download-Buttons mit Funktion
-	document.getElementById("downloadHtml").addEventListener("click", () => downloadFile("index.html", getCode().html, "text/html;charset=utf-8"));
+	document.getElementById("downloadHtml").addEventListener("click", () =>	downloadFile("index.html", getCode().html, "text/html;charset=utf-8"));
 	document.getElementById("downloadCss").addEventListener("click", () => downloadFile("style.css", getCode().css, "text/css;charset=utf-8"));
 	document.getElementById("downloadJs").addEventListener("click", () => downloadFile("script.js", getCode().js, "text/javascript;charset=utf-8"));
 
@@ -219,12 +303,14 @@ console.log("Hallo JavaScript!");`;
 		// Hole die Editorinhalte und erzeuge aus ihnen drei Dateien
 		const code = getCode();
 		const zip = new JSZip();
+
 		zip.file("index.html", code.html);
 		zip.file("style.css", code.css);
 		zip.file("script.js", code.js);
 
 		// Verwende den Projektnamen als Dateinamen
 		const projectTitle = projectTitleInput.value.trim() || "Webseitenprojekt";
+
 		const safeFileName = projectTitle
 			.normalize("NFKD")
 			.replace(/[\u0300-\u036f]/g, "")
@@ -234,10 +320,11 @@ console.log("Hallo JavaScript!");`;
 
 		const blob = await zip.generateAsync({ type: "blob" });
 
-		downloadFile(`${safeFileName}.zip`,	blob, "application/zip");
+		downloadFile(`${safeFileName}.zip`, blob, "application/zip");
 	});
 
 	// Nutze die Beautify-Extension, um Code aufzuräumen
+	
 	// Belege die Aufräumen-Buttons mit Funktion
 	document.querySelectorAll("[data-format]").forEach(button => {
 		button.addEventListener("click", () => {
@@ -247,14 +334,16 @@ console.log("Hallo JavaScript!");`;
 				const beautify = ace.require("ace/ext/beautify");
 				beautify.beautify(editor.session);
 			} catch {
-				alert("Die Aufräumen-Funktion steht aktuell nicht zur Verfügung.");
+				alert("Die Aufräum-Funktion steht aktuell nicht zur Verfügung.");
 			}
 		});
 	});
 
 	// Belege den Zurücksetzen-Button mit Funktion
 	document.getElementById("resetButton").addEventListener("click", () => {
-		if (!confirm("Wollen Sie wirklich alle drei Editorfenster auf den Ausgangszustand zurücksetzen?")) return;
+		if (!confirm("Wollen Sie wirklich alle drei Editorfenster auf den Ausgangszustand zurücksetzen?")) {
+			return;
+		}
 
 		// Defaultwerte erneut laden
 		editors.html.setValue(START_HTML, -1);
@@ -266,13 +355,62 @@ console.log("Hallo JavaScript!");`;
 		updatePreview();
 	});
 
-	// Projektnamen bei Änderungen lokal speichern
-	projectTitleInput.addEventListener("input", saveLocally);
+	// Setze den Light- oder Dark-Mode
+	function setTheme(dark) {
+		document.body.classList.toggle("dark-theme", dark);
+
+		// Button je nach Modus wechseln und Beschriftung aktualisieren
+		themeToggle.innerHTML = dark
+			? '<i class="fa-solid fa-sun" aria-hidden="true"></i>'
+			: '<i class="fa-solid fa-moon" aria-hidden="true"></i>';
+		const themeLabel = dark
+			? "Lightmode aktivieren"
+			: "Darkmode aktivieren";
+		themeToggle.title = themeLabel;
+		themeToggle.setAttribute("aria-label", themeLabel);
+
+		// Setze das zum Modus passende Theme für alle ACE-Fenster
+		Object.values(editors).forEach(editor => {
+			editor.setTheme(
+				dark
+					? "ace/theme/monokai"
+					: "ace/theme/chrome"
+			);
+		});
+
+		// Gewählten Modus lokal speichern
+		localStorage.setItem("webeditor-theme", dark ? "dark" : "light");
+	}
+
+	const themeToggle = document.getElementById("themeToggle");
+
+	// Gespeicherten Modus beim Laden wiederherstellen
+	const savedTheme = localStorage.getItem("webeditor-theme");
+
+	setTheme(savedTheme === "dark");
+
+	themeToggle.addEventListener("click", () => {
+		const dark = !document.body.classList.contains("dark-theme");
+		setTheme(dark);
+	});
+
+	// Projektnamen bei Änderungen automatisch speichern
+	projectTitleInput.addEventListener("input", () => {
+		saveStatus.textContent = "Ungespeicherte Änderungen";
+		window.clearTimeout(debounceTimer);
+
+		debounceTimer = window.setTimeout(() => {
+			saveLocally();
+		}, SAVE_DELAY);
+	});
 
 	// Lade gespeicherte Inhalte und aktualisiere die Vorschau
 	loadLocally();
+	saveStatus.textContent = "Gespeichert";
 	updatePreview();
 
 	// Passe die Editoren bei Fenstergrößenänderungen an
-	window.addEventListener("resize", () => Object.values(editors).forEach(editor => editor.resize()));
+	window.addEventListener("resize", () =>
+		Object.values(editors).forEach(editor => editor.resize())
+	);
 })();
