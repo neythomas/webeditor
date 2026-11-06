@@ -52,7 +52,7 @@ console.log("Hallo JavaScript!");`;
 			enableSnippets: true,
 			wrap: false
 		});
-		editor.session.setUseWorker(false);
+		// editor.session.setUseWorker(false);	// Falls Ladefehler in der Konsole erscheinen: WebWorker deaktivieren (deaktiviert auch Syntax-Prüfung!) 
 		return editor;
 	};
 
@@ -67,7 +67,7 @@ console.log("Hallo JavaScript!");`;
 	const storageKey = "webeditor";
 	const projectTitleInput = document.getElementById("projectTitle");
 	const projectTitleStorageKey = "webeditor-project";
-
+	
 	// Hole dir den Inhalt aller drei Editoren
 	function getCode() {
 		return {
@@ -80,24 +80,51 @@ console.log("Hallo JavaScript!");`;
 	// Erzeuge die Vorschau
 	function createPreviewDocument() {
 		const code = getCode();
-		// Bette für die Vorschau den CSS- und JavaScript-Code direkt ein
+
+		// CSS und JavaScript für die Vorschau vorbereiten
 		const css = code.css.replace(/<\/style/gi, "<\\/style");
-		const js = code.js.replace(/<\/script/gi, "<\\/script");
+		const js = code.js.replace(/<\//g, "<\\/");
+
+		// HTML nur für die Vorschau bearbeiten
 		let html = code.html;
+
+		// Externe Verweise auf die Projektdateien (siehe START_HTML) für Preview entfernen (im Download sollen sie erhalten bleiben)
+		html = html.replace(/<link\b[^>]*\bhref\s*=\s*["']style\.css["'][^>]*>/gi,"");
+		html = html.replace(/<script\b[^>]*\bsrc\s*=\s*["']script\.js["'][^>]*>\s*<\/script>/gi,"");
+
+		// Stattdessen: CSS und JavaScript direkt einbetten
 		const styleTag = `<style>\n${css}\n</style>`;
 		const scriptTag = `<script>\n${js}\n<\/script>`;
-		if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, `${styleTag}\n</head>`);
-		else html = `${styleTag}\n${html}`;
-		if (/<\/body>/i.test(html)) html = html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
-		else html += `\n${scriptTag}`;
+		if (/<\/head>/i.test(html)) {
+			html = html.replace(/<\/head>/i, `${styleTag}\n</head>`);
+		} else {
+			html = `${styleTag}\n${html}`;
+		}
+
+		if (/<\/body>/i.test(html)) {
+			html = html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
+		} else {
+			html += `\n${scriptTag}`;
+		}
+
 		return html;
 	}
 
-	// Aktualisiere die Vorschau (inkl. Statusanzeige)
+
+	// Aktualisiere die Vorschau (inkl. Statusanzeige), verwende dabei ein Debouncing von 300ms (zeitverzögertes Aktualisieren)
+	let previewTimeout;
 	function updatePreview() {
-		frame.srcdoc = createPreviewDocument();
+		window.clearTimeout(previewTimeout);
+
 		status.textContent = "Aktualisiere...";
-		window.setTimeout(() => { status.textContent = "Aktuell"; }, 1000);
+
+		previewTimeout = window.setTimeout(() => {
+			frame.onload = () => {
+				status.textContent = "Aktuell";
+			};
+
+			frame.srcdoc = createPreviewDocument();
+		}, 300);
 	}
 
 	// Speichere die Editor-Inhalte im lokalen Browserspeicher
@@ -125,11 +152,12 @@ console.log("Hallo JavaScript!");`;
 		} catch (_) { /* ignoriere fehlerhafte lokale Speicherung */ }
 	}
 
+	// Speichere Änderungen alle 500ms
 	let updateTimer;
 	Object.values(editors).forEach(editor => editor.session.on("change", () => {
 		saveLocally();
 		clearTimeout(updateTimer);
-		updateTimer = setTimeout(updatePreview, 350);
+		updateTimer = setTimeout(updatePreview, 500);
 	}));
 
 	// Belege Vorschau/Aktualisieren-Buttons mit Funktion
@@ -161,7 +189,10 @@ console.log("Hallo JavaScript!");`;
 		document.body.appendChild(link);
 		link.click();
 		link.remove();
-		URL.revokeObjectURL(url);
+		// Warte kurz, bis die URL widerrufen wird (um ein Widerrufen vor Beginn des Downloads zu vermeiden)
+		window.setTimeout(() => {
+			URL.revokeObjectURL(url);
+		}, 1000);
 	}
 
 	// Belege Download-Buttons mit Funktion
