@@ -2,6 +2,8 @@
 
 Ein einfacher Webeditor für HTML, CSS und JavaScript mit Live-Vorschau zum Einsatz im Schulunterricht.
 
+[Live-Demo](https://informatik.thomas-ney.net/html)
+
 ## Features
 
 * Editoren für HTML, CSS und JS
