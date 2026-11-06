@@ -2,6 +2,8 @@
 
 Ein einfacher Webeditor für HTML, CSS und JavaScript mit Live-Vorschau zum Einsatz im Schulunterricht.
 
+![Screenshot des Webeditors](https://informatik.thomas-ney.net/html/Screenshot.png)
+
 [Live-Demo](https://informatik.thomas-ney.net/html)
 
 ## Features
@@ -21,7 +23,7 @@ Das Projekt verwendet lediglich HTML, CSS und JavaScript. Kopiere die Dateien
 * `styles.css`
 * `editor.js`
 
-einfach in ein öffentlich zugängliches Verzeichnis auf deinem Webserver.
+einfach in ein öffentlich zugängliches Verzeichnis auf deinem Webserver oder lokal auf deinen Rechner.
 
 ## Konfiguration
 
