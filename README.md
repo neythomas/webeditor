@@ -27,6 +27,8 @@ einfach in ein öffentlich zugängliches Verzeichnis auf deinem Webserver.
 
 Der Standard-Quelltext aller drei Editorfenster lässt sich über die Konstanten `START_HTML`, `START_CSS` und `START_JS` in der Datei `editor.js` anpassen.
 
+**Hinweis:** In der hier veröffentlichten Version werden die Bibliotheken über öffentliche CDNs eingebunden. Für den Einsatz in der Schule empfiehlt es sich, aus Datenschutzgründen die entsprechenden Bibliotheken lokal bereitzustellen. Der Editor funktioniert dann auch ohne bestehende Internetverbindung. 
+
 ## Lizenz
 
 Das Projekt ist Open-Source unter der [MIT-Lizenz](https://opensource.org/license/mit).
