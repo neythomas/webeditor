@@ -36,14 +36,12 @@ console.log("Hallo JavaScript!");`;
 
 	const editors = {};
 
-	// Voreinstellungen des ACE-Editors
-	// https://github.com/ajaxorg/ace/wiki/Configuring-Ace
+	// Voreinstellungen des ACE-Editors (siehe https://github.com/ajaxorg/ace/wiki/Configuring-Ace)
 	const setupEditor = (id, mode, initial) => {
 		const editor = ace.edit(id);
 		editor.setTheme("ace/theme/chrome");
 		editor.session.setMode(`ace/mode/${mode}`);
 		editor.setValue(initial, -1);
-
 		editor.setOptions({
 			fontSize: "14px",
 			showPrintMargin: false,
@@ -55,7 +53,6 @@ console.log("Hallo JavaScript!");`;
 			enableSnippets: true,
 			wrap: false
 		});
-
 		// Falls Ladefehler in der Konsole erscheinen: WebWorker deaktivieren (deaktiviert auch Syntax-Prüfung!)
 		// editor.session.setUseWorker(false);
 
@@ -97,10 +94,8 @@ console.log("Hallo JavaScript!");`;
 		// HTML nur für die Vorschau bearbeiten
 		let html = code.html;
 
-		// Externe Verweise auf die Projektdateien für Preview entfernen
-		// Im Download sollen sie erhalten bleiben
+		// Externe Verweise auf die Projektdateien nur in Preview entfernen (Im Download sollen sie erhalten bleiben)
 		html = html.replace(/<link\b[^>]*\bhref\s*=\s*["']style\.css["'][^>]*>/gi, "");
-
 		html = html.replace(/<script\b[^>]*\bsrc\s*=\s*["']script\.js["'][^>]*>\s*<\/script>/gi, "");
 
 		// Stattdessen CSS und JavaScript direkt einbetten
@@ -108,21 +103,15 @@ console.log("Hallo JavaScript!");`;
 		const scriptTag = `<script>\n${js}\n<\/script>`;
 
 		if (/<\/head>/i.test(html)) {
-			html = html.replace(
-				/<\/head>/i,
-				`${styleTag}\n</head>`
-			);
+			html = html.replace(/<\/head>/i, `${styleTag}\n</head>`);	// Falls </head> vorhanden: Füge CSS davor ein
 		} else {
-			html = `${styleTag}\n${html}`;
+			html = `${styleTag}\n${html}`;	// Sonst: Am Dokumentenanfang
 		}
 
 		if (/<\/body>/i.test(html)) {
-			html = html.replace(
-				/<\/body>/i,
-				`${scriptTag}\n</body>`
-			);
+			html = html.replace(/<\/body>/i, `${scriptTag}\n</body>`);	// Falls </body> vorhanden: Füge JS davor ein
 		} else {
-			html += `\n${scriptTag}`;
+			html += `\n${scriptTag}`;		// Sonst: Am Dokumentenende
 		}
 
 		return html;
@@ -285,7 +274,5 @@ console.log("Hallo JavaScript!");`;
 	updatePreview();
 
 	// Passe die Editoren bei Fenstergrößenänderungen an
-	window.addEventListener("resize", () => {
-		Object.values(editors).forEach(editor => editor.resize());
-	});
+	window.addEventListener("resize", () => Object.values(editors).forEach(editor => editor.resize()));
 })();
