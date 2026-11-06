@@ -16,14 +16,14 @@ Ein einfacher Webeditor für HTML, CSS und JavaScript mit Live-Vorschau zum Eins
 Das Projekt verwendet lediglich HTML, CSS und JavaScript. Kopiere die Dateien
 
 * `index.html`
-* `styles.css`
-* `app.js`
+* `style.css`
+* `script.js`
 
 einfach in ein öffentlich zugängliches Verzeichnis auf deinem Webserver.
 
 ## Konfiguration
 
-Der Standard-Quelltext aller drei Editorfenster lässt sich über die Konstanten `START_HTML`, `START_CSS` und `START_JS` in der Datei `app.js` anpassen.
+Der Standard-Quelltext aller drei Editorfenster lässt sich über die Konstanten `START_HTML`, `START_CSS` und `START_JS` in der Datei `script.js` anpassen.
 
 ## Lizenz
 
