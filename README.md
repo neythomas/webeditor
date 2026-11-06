@@ -14,6 +14,7 @@ Ein einfacher Webeditor für HTML, CSS und JavaScript mit Live-Vorschau zum Eins
 * Code-Verschönerung auf Knopfdruck
 * Automatische Zwischenspeicherung im lokalen Browserspeicher
 * Downloadmöglichkeit für einzelne Dateien oder das gesamte Projekt als ZIP-Datei
+* reduzierte Benutzeroberfläche, Editoren nach Bedarf aus- und einklappbar, aktivierbarer Dark-Mode
 
 ## Installation
 
