@@ -35,12 +35,15 @@ h1 {
 console.log("Hallo JavaScript!");`;
 
 	const editors = {};
-	// Voreinstellungen des ACE-Editors (siehe https://github.com/ajaxorg/ace/wiki/Configuring-Ace)
+
+	// Voreinstellungen des ACE-Editors
+	// https://github.com/ajaxorg/ace/wiki/Configuring-Ace
 	const setupEditor = (id, mode, initial) => {
 		const editor = ace.edit(id);
 		editor.setTheme("ace/theme/chrome");
 		editor.session.setMode(`ace/mode/${mode}`);
 		editor.setValue(initial, -1);
+
 		editor.setOptions({
 			fontSize: "14px",
 			showPrintMargin: false,
@@ -52,7 +55,10 @@ console.log("Hallo JavaScript!");`;
 			enableSnippets: true,
 			wrap: false
 		});
-		// editor.session.setUseWorker(false);	// Falls Ladefehler in der Konsole erscheinen: WebWorker deaktivieren (deaktiviert auch Syntax-Prüfung!) 
+
+		// Falls Ladefehler in der Konsole erscheinen: WebWorker deaktivieren (deaktiviert auch Syntax-Prüfung!)
+		// editor.session.setUseWorker(false);
+
 		return editor;
 	};
 
@@ -67,8 +73,11 @@ console.log("Hallo JavaScript!");`;
 	const storageKey = "webeditor";
 	const projectTitleInput = document.getElementById("projectTitle");
 	const projectTitleStorageKey = "webeditor-project";
-	
-	// Hole dir den Inhalt aller drei Editoren
+
+	// Debounce-Timer für lokales Speichern und Vorschauaktualisierung
+	let debounceTimer;
+
+	// Hole den Inhalt aller drei Editoren
 	function getCode() {
 		return {
 			html: editors.html.getValue(),
@@ -88,21 +97,30 @@ console.log("Hallo JavaScript!");`;
 		// HTML nur für die Vorschau bearbeiten
 		let html = code.html;
 
-		// Externe Verweise auf die Projektdateien (siehe START_HTML) für Preview entfernen (im Download sollen sie erhalten bleiben)
-		html = html.replace(/<link\b[^>]*\bhref\s*=\s*["']style\.css["'][^>]*>/gi,"");
-		html = html.replace(/<script\b[^>]*\bsrc\s*=\s*["']script\.js["'][^>]*>\s*<\/script>/gi,"");
+		// Externe Verweise auf die Projektdateien für Preview entfernen
+		// Im Download sollen sie erhalten bleiben
+		html = html.replace(/<link\b[^>]*\bhref\s*=\s*["']style\.css["'][^>]*>/gi, "");
 
-		// Stattdessen: CSS und JavaScript direkt einbetten
+		html = html.replace(/<script\b[^>]*\bsrc\s*=\s*["']script\.js["'][^>]*>\s*<\/script>/gi, "");
+
+		// Stattdessen CSS und JavaScript direkt einbetten
 		const styleTag = `<style>\n${css}\n</style>`;
 		const scriptTag = `<script>\n${js}\n<\/script>`;
+
 		if (/<\/head>/i.test(html)) {
-			html = html.replace(/<\/head>/i, `${styleTag}\n</head>`);
+			html = html.replace(
+				/<\/head>/i,
+				`${styleTag}\n</head>`
+			);
 		} else {
 			html = `${styleTag}\n${html}`;
 		}
 
 		if (/<\/body>/i.test(html)) {
-			html = html.replace(/<\/body>/i, `${scriptTag}\n</body>`);
+			html = html.replace(
+				/<\/body>/i,
+				`${scriptTag}\n</body>`
+			);
 		} else {
 			html += `\n${scriptTag}`;
 		}
@@ -110,21 +128,15 @@ console.log("Hallo JavaScript!");`;
 		return html;
 	}
 
-
-	// Aktualisiere die Vorschau (inkl. Statusanzeige), verwende dabei ein Debouncing von 300ms (zeitverzögertes Aktualisieren)
-	let previewTimeout;
+	// Aktualisiere die Vorschau (inkl. Statusanzeige)
 	function updatePreview() {
-		window.clearTimeout(previewTimeout);
-
 		status.textContent = "Aktualisiere...";
 
-		previewTimeout = window.setTimeout(() => {
-			frame.onload = () => {
-				status.textContent = "Aktuell";
-			};
+		frame.onload = () => {
+			status.textContent = "Aktuell";
+		};
 
-			frame.srcdoc = createPreviewDocument();
-		}, 300);
+		frame.srcdoc = createPreviewDocument();
 	}
 
 	// Speichere die Editor-Inhalte im lokalen Browserspeicher
@@ -133,7 +145,7 @@ console.log("Hallo JavaScript!");`;
 			localStorage.setItem(storageKey, JSON.stringify(getCode()));
 			localStorage.setItem(projectTitleStorageKey, projectTitleInput.value);
 			saveStatus.textContent = "Der Inhalt wurde lokal gespeichert.";
-		} catch (error) {
+		} catch {
 			saveStatus.textContent = "Der lokale Speicher ist nicht verfügbar!";
 		}
 	}
@@ -142,23 +154,30 @@ console.log("Hallo JavaScript!");`;
 	function loadLocally() {
 		try {
 			const savedTitle = localStorage.getItem(projectTitleStorageKey);
-			if (savedTitle) projectTitleInput.value = savedTitle;
+
+			if (savedTitle !== null) projectTitleInput.value = savedTitle;
+
 			const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+
 			if (saved && typeof saved.html === "string" && typeof saved.css === "string" && typeof saved.js === "string") {
 				editors.html.setValue(saved.html, -1);
 				editors.css.setValue(saved.css, -1);
 				editors.js.setValue(saved.js, -1);
 			}
-		} catch (_) { /* ignoriere fehlerhafte lokale Speicherung */ }
+		} catch { } // Ignoriere fehlerhafte lokale Speicherung
 	}
 
-	// Speichere Änderungen alle 500ms
-	let updateTimer;
-	Object.values(editors).forEach(editor => editor.session.on("change", () => {
-		saveLocally();
-		clearTimeout(updateTimer);
-		updateTimer = setTimeout(updatePreview, 500);
-	}));
+	// Nach 500ms ohne Änderung: lokal speichern und Vorschau aktualisieren (Debounce-Timer)
+	Object.values(editors).forEach(editor => {
+		editor.session.on("change", () => {
+			window.clearTimeout(debounceTimer);
+
+			debounceTimer = window.setTimeout(() => {
+				saveLocally();
+				updatePreview();
+			}, 500);
+		});
+	});
 
 	// Belege Vorschau/Aktualisieren-Buttons mit Funktion
 	document.getElementById("runButton").addEventListener("click", updatePreview);
@@ -172,16 +191,16 @@ console.log("Hallo JavaScript!");`;
 			const collapsed = panel.classList.toggle("collapsed");
 			button.setAttribute("aria-expanded", String(!collapsed));
 			button.title = collapsed ? `${name.toUpperCase()}-Editor ausklappen` : `${name.toUpperCase()}-Editor einklappen`;
-			button.innerHTML = collapsed
-				? '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
-				: '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
-			window.setTimeout(() => Object.values(editors).forEach(editor => editor.resize()), 220);
+			button.innerHTML = collapsed ? '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>' : '<i class="fa-solid fa-chevron-up" aria-hidden="true"></i>';
+			window.setTimeout(() => {
+				Object.values(editors).forEach(editor => editor.resize());
+			}, 200);
 		});
 	});
 
-	// Bereite Download einzelner Scripte vor
+	// Bereite Download einzelner Skripte vor
 	function downloadFile(name, content, type = "text/plain;charset=utf-8") {
-		const blob = new Blob([content], {type});
+		const blob = new Blob([content], { type });
 		const url = URL.createObjectURL(blob);
 		const link = document.createElement("a");
 		link.href = url;
@@ -207,12 +226,14 @@ console.log("Hallo JavaScript!");`;
 			alert("Die ZIP-Bibliothek konnte nicht geladen werden.");
 			return;
 		}
+
 		// Hole die Editorinhalte und erzeuge aus ihnen drei Dateien
 		const code = getCode();
 		const zip = new JSZip();
 		zip.file("index.html", code.html);
 		zip.file("style.css", code.css);
 		zip.file("script.js", code.js);
+
 		// Verwende den Projektnamen als Dateinamen
 		const projectTitle = projectTitleInput.value.trim() || "Webseitenprojekt";
 		const safeFileName = projectTitle
@@ -221,19 +242,22 @@ console.log("Hallo JavaScript!");`;
 			.replace(/[^a-zA-Z0-9_-]+/g, "-")
 			.replace(/^-+|-+$/g, "")
 			.slice(0, 80) || "Webseitenprojekt";
-		const blob = await zip.generateAsync({type: "blob"});
-		downloadFile(`${safeFileName}.zip`, blob, "application/zip");
+
+		const blob = await zip.generateAsync({ type: "blob" });
+
+		downloadFile(`${safeFileName}.zip`,	blob, "application/zip");
 	});
 
 	// Nutze die Beautify-Extension, um Code aufzuräumen
-	// Belege die Aufräumen-Buttons mit Funktion.
+	// Belege die Aufräumen-Buttons mit Funktion
 	document.querySelectorAll("[data-format]").forEach(button => {
 		button.addEventListener("click", () => {
 			const editor = editors[button.dataset.format];
+
 			try {
 				const beautify = ace.require("ace/ext/beautify");
 				beautify.beautify(editor.session);
-			} catch (_) {
+			} catch {
 				alert("Die Aufräumen-Funktion steht aktuell nicht zur Verfügung.");
 			}
 		});
@@ -242,17 +266,26 @@ console.log("Hallo JavaScript!");`;
 	// Belege den Zurücksetzen-Button mit Funktion
 	document.getElementById("resetButton").addEventListener("click", () => {
 		if (!confirm("Wollen Sie wirklich alle drei Editorfenster auf den Ausgangszustand zurücksetzen?")) return;
+
 		// Defaultwerte erneut laden
 		editors.html.setValue(START_HTML, -1);
 		editors.css.setValue(START_CSS, -1);
 		editors.js.setValue(START_JS, -1);
+
 		// Lokalen Speicher überschreiben und Vorschau aktualisieren
 		saveLocally();
 		updatePreview();
 	});
 
+	// Projektnamen bei Änderungen lokal speichern
 	projectTitleInput.addEventListener("input", saveLocally);
+
+	// Lade gespeicherte Inhalte und aktualisiere die Vorschau
 	loadLocally();
 	updatePreview();
-	window.addEventListener("resize", () => Object.values(editors).forEach(editor => editor.resize()));
+
+	// Passe die Editoren bei Fenstergrößenänderungen an
+	window.addEventListener("resize", () => {
+		Object.values(editors).forEach(editor => editor.resize());
+	});
 })();
