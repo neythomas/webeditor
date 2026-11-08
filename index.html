@@ -19,7 +19,8 @@
 		<div class="toolbar">
 			<label class="project-title-wrap" for="projectTitle"><span class="project-title-label">Projektname: </span><input id="projectTitle" class="project-title-input" type="text" value="Webseitenprojekt" maxlength="80" placeholder="Projekttitel" aria-label="Projekttitel"></label>
 			<button id="runButton" class="button button-primary" aria-label="Vorschau starten" title="Vorschau starten"><i class="fa-solid fa-play" aria-hidden="true"></i><span class="button-text">Vorschau</span></button>
-			<button id="downloadZip" class="button" aria-label="Projekt als ZIP herunterladen" title="Projekt als ZIP herunterladen"><i class="fa-solid fa-download" aria-hidden="true"></i><span class="button-text">Projekt als ZIP downloaden</span></button>
+			<button id="downloadZip" class="button" aria-label="Projekt als ZIP herunterladen" title="Projekt als ZIP herunterladen"><i class="fa-solid fa-file-zipper" aria-hidden="true"></i><span class="button-text">Projekt herunterladen</span></button>
+			<button id="importZipButton" class="button" aria-label="Projekt öffnen" title="ZIP-Projekt öffnen"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span class="button-text">Projekt öffnen</span></button>
 			<button id="resetButton" class="button" title="Zurücksetzen" aria-label="Zurücksetzen"><i class="fa-solid fa-rotate-left" aria-hidden="true"></i></button>
 			<button id="themeToggle" class="button" title="Darkmode aktivieren" aria-label="Darkmode aktivieren"><i class="fa-solid fa-moon" aria-hidden="true"></i></button>
 		</div>
@@ -33,6 +34,7 @@
 						<span class="panel-title" id="htmlPanelTitle">HTML</span><span class="panel-meta" id="htmlPanelFile">index.html</span>
 						<button class="panel-button format-button" data-format="html" title="HTML-Code aufräumen" aria-label="HTML-Code aufräumen" aria-controls="htmlEditor"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span class="button-text">Aufräumen</span></button>
 						<button class="panel-button download-button" id="downloadHtml" title="HTML-Datei herunterladen" aria-label="HTML-Datei herunterladen" aria-controls="htmlEditor"><i class="fa-solid fa-download" aria-hidden="true"></i><span class="button-text">Download</span></button>
+						<button class="panel-button upload-button" id="uploadHtml" title="HTML-Datei hochladen" aria-label="Upload" aria-controls="htmlEditor"><i class="fa-solid fa-upload" aria-hidden="true"></i><span class="button-text">Upload</span></button>
 						<button class="panel-button collapse-button" data-collapse="html" aria-expanded="true" aria-controls="htmlEditor" title="HTML-Editor einklappen" aria-label="HTML-Editor einklappen"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
 					</div>
 					<div id="htmlEditor" class="ace-editor" aria-labelledby="htmlPanelTitle htmlPanelFile"></div>
@@ -42,6 +44,7 @@
 						<span class="panel-title" id="cssPanelTitle">CSS</span><span class="panel-meta" id="cssPanelFile">style.css</span>
 						<button class="panel-button format-button" data-format="css" title="CSS-Code aufräumen" aria-label="CSS-Code aufräumen" aria-controls="cssEditor"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span class="button-text">Aufräumen</span></button>
 						<button class="panel-button download-button" id="downloadCss" title="CSS-Datei herunterladen" aria-label="CSS-Datei herunterladen" aria-controls="cssEditor"><i class="fa-solid fa-download" aria-hidden="true"></i><span class="button-text">Download</span></button>
+						<button class="panel-button upload-button" id="uploadCss" title="CSS-Datei hochladen" aria-label="Upload" aria-controls="cssEditor"><i class="fa-solid fa-upload" aria-hidden="true"></i><span class="button-text">Upload</span></button>
 						<button class="panel-button collapse-button" data-collapse="css" aria-expanded="true" aria-controls="cssEditor" title="CSS-Editor einklappen" aria-label="CSS-Editor einklappen"><i class="fa-solid fa-chevron-up" aria-hidden="true"></i></button>
 					</div>
 					<div id="cssEditor" class="ace-editor" aria-labelledby="cssPanelTitle cssPanelFile"></div>
@@ -51,6 +54,7 @@
 						<span class="panel-title" id="jsPanelTitle">JavaScript</span><span class="panel-meta" id="jsPanelFile">script.js</span>
 						<button class="panel-button format-button" data-format="js" title="JS-Code aufräumen" aria-label="JavaScript-Code aufräumen" aria-controls="jsEditor"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span class="button-text">Aufräumen</span></button>
 						<button class="panel-button download-button" id="downloadJs" title="JavaScript-Datei herunterladen" aria-label="JavaScript-Datei herunterladen" aria-controls="jsEditor"><i class="fa-solid fa-download" aria-hidden="true"></i><span class="button-text">Download</span></button>
+						<button class="panel-button upload-button" id="uploadJs" title="JavaScript-Datei hochladen" aria-label="Upload" aria-controls="jsEditor"><i class="fa-solid fa-upload" aria-hidden="true"></i><span class="button-text">Upload</span></button>
 						<button class="panel-button collapse-button" data-collapse="js" aria-expanded="false" aria-controls="jsEditor" title="JavaScript-Editor ausklappen" aria-label="JavaScript-Editor ausklappen"><i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
 					</div>
 					<div id="jsEditor" class="ace-editor" aria-labelledby="jsPanelTitle jsPanelFile"></div>
@@ -62,6 +66,11 @@
 			</section>
 		</main>
 	</div>
+
+	<input id="uploadHtmlInput" type="file" accept=".html,.htm,text/html" hidden aria-label="HTML-Datei auswählen">
+	<input id="uploadCssInput" type="file" accept=".css,text/css" hidden aria-label="CSS-Datei auswählen">
+	<input id="uploadJsInput" type="file" accept=".js,text/javascript,application/javascript" hidden aria-label="JavaScript-Datei auswählen">
+	<input id="importZipInput" type="file" accept=".zip,application/zip" hidden aria-label="ZIP-Projekt auswählen">
 
 	<footer class="statusbar"><span id="saveStatus" role="status"></span><span id="versionInfo"></span></footer>
 
