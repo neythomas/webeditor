@@ -1,7 +1,7 @@
 (() => {
 	"use strict";
 
-	const APP_VERSION = "1.2";
+	const APP_VERSION = "1.2.0";
 	const SAVE_DELAY = 500;						// Wartezeit nach letzter Änderung für die Auto-Speicherung
 	const MAX_FILESIZE = 10 * 1024 * 1024;		// Maximale Dateigröße von ZIP-Archiven für Upload
 	
