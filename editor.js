@@ -1,8 +1,10 @@
 (() => {
 	"use strict";
 
-	const APP_VERSION = "1.1.3";
-
+	const APP_VERSION = "1.2";
+	const SAVE_DELAY = 500;						// Wartezeit nach letzter Änderung für die Auto-Speicherung
+	const MAX_FILESIZE = 10 * 1024 * 1024;		// Maximale Dateigröße von ZIP-Archiven für Upload
+	
 	// Start-HTML (HTML-Grundgerüst als Vorlage beim Start)
 	const START_HTML = `<!DOCTYPE html>
 <html lang="de">
@@ -77,6 +79,112 @@ console.log("Hallo JavaScript!");`;
 
 	// Debounce-Timer für lokales Speichern und Vorschauaktualisierung
 	let debounceTimer;
+
+	// Einzelne Dateien über die Upload-Schaltfläche des jeweiligen Editors laden
+	const individualUploads = [
+		{ button: "uploadHtml", input: "uploadHtmlInput", type: "html", label: "HTML" },
+		{ button: "uploadCss", input: "uploadCssInput", type: "css", label: "CSS" },
+		{ button: "uploadJs", input: "uploadJsInput", type: "js", label: "JavaScript" }
+	];
+
+	// Ein Event-Handler für alle drei Dateien
+	individualUploads.forEach(({ button, input, type, label }) => {
+		
+		// Erzeuge Dateiauswahl-Dialog
+		const fileInput = document.getElementById(input);
+		document.getElementById(button).addEventListener("click", () => fileInput.click());
+		
+		// Wird ausgelöst, sobald eine Datei ausgewählt wurde
+		fileInput.addEventListener("change", async () => {
+			const file = fileInput.files && fileInput.files[0];
+			fileInput.value = ""; // Löschen, um erneute Auswahl derselben Datei zu erlauben
+			
+			if (!file) return;
+			
+			// Überschreiben bestätigen
+			if (!confirm(`Möchten Sie den ${label}-Editor durch „${file.name}“ ersetzen?`)) return;
+			
+			try {
+				editors[type].setValue(await file.text(), -1);
+				window.clearTimeout(debounceTimer);
+				saveLocally();
+				updatePreview();
+				saveStatus.textContent = `${label}-Datei geladen: ${file.name}`;
+			} catch {
+				alert(`Die ${label}-Datei konnte nicht gelesen werden.`);
+			}
+		});
+	});
+
+	// ZIP-Projekt über die Schaltfläche "Projekt öffnen" laden
+	
+	// Erzeuge Dateiauswahl-Dialog
+	const importZipInput = document.getElementById("importZipInput");
+	document.getElementById("importZipButton").addEventListener("click", () => importZipInput.click());
+	
+	// Wird ausgelöst, sobald eine ZIP-Datei ausgewählt wurde
+	importZipInput.addEventListener("change", async () => {
+		const file = importZipInput.files && importZipInput.files[0];
+		importZipInput.value = "";
+		if (!file) return;
+		
+		// Prüfe auf maximal erlaubte Dateigröße von 10 MB
+		if (file.size > MAX_FILESIZE) {
+			alert("Die ZIP-Datei ist größer als 10 MB und wird nicht geöffnet.");
+			return;
+		}
+		
+		if (typeof JSZip === "undefined") {
+			alert("Die ZIP-Bibliothek konnte nicht geladen werden.");
+			return;
+		}
+		if (!confirm(`Möchten Sie das aktuelle Projekt durch „${file.name}“ ersetzen?`)) return;
+		try {
+			// ZIP laden und Prüfsumme kontrollieren
+			const zip = await JSZip.loadAsync(file, { checkCRC32: true });
+			
+			// Suche nach den passenden Dateinamen im Root der ZIP
+			const htmlFile = zip.file("index.html");
+			const cssFile = zip.file("style.css");
+			const jsFile = zip.file("script.js");
+
+			// Prüfen, ob mindestens eine der erwarteten Dateien vorhanden ist.
+			if (!htmlFile && !cssFile && !jsFile) {
+				alert("In der ZIP-Datei wurden keine passenden Dateien gefunden.");
+				return;
+			}
+
+			// Vorhandene Dateien als Text einlesen (Nicht vorhandene Dateien bleiben im jeweiligen Editor unverändert)
+			const imported = {};
+			if (htmlFile) imported.html = await htmlFile.async("string");
+			if (cssFile) imported.css = await cssFile.async("string");
+			if (jsFile) imported.js = await jsFile.async("string");
+
+			// Die eingelesenen Inhalte den passenden Editoren zuweisen.
+			for (const [type, content] of Object.entries(imported)) {
+				editors[type].setValue(content, -1);
+			}
+			
+			// Übernehme den Namen der ZIP-Datei als Projektnamen
+			projectTitleInput.value = file.name.replace(/\.zip$/i, "").slice(0, 80) || "Webseitenprojekt";
+			
+			window.clearTimeout(debounceTimer);
+			saveLocally();
+			updatePreview();
+
+			saveStatus.textContent = `ZIP-Projekt geladen: ${projectTitleInput.value}`;
+
+			// Fehlende Dateien ermitteln
+			const missing = [
+				!htmlFile && "index.html",
+				!cssFile && "style.css",
+				!jsFile && "script.js"
+			].filter(Boolean);
+			if (missing.length) alert(`ZIP-Projekt geladen. Folgende Inhalte konnten nicht geladen werden: ${missing.join(", ")}`);
+		} catch {
+			alert("Die ZIP-Datei ist ungültig oder konnte nicht gelesen werden.");
+		}
+	});
 
 	// Hole den Inhalt aller drei Editoren
 	function getCode() {
@@ -164,9 +272,6 @@ console.log("Hallo JavaScript!");`;
 		}
 	}
 
-	// Wartezeit nach letzter Änderung für die Auto-Speicherung
-	const SAVE_DELAY = 500;
-	
 	// Nach 500ms ohne Änderung: lokal speichern und Vorschau aktualisieren (Debounce)
 	Object.values(editors).forEach(editor => {
 		editor.session.on("change", () => {
@@ -420,7 +525,7 @@ console.log("Hallo JavaScript!");`;
 
 	// Zeige die Versionsnummer in der Statusleiste an
 	const versionElement = document.getElementById("versionInfo");
-	if (versionElement) { versionElement.innerHTML = '<a href="https://github.com/neythomas/webeditor"><i class="fa-brands fa-github"></i> Webeditor '+APP_VERSION+'</a>'; }
+	if (versionElement) { versionElement.innerHTML = '<a href="https://github.com/neythomas/webeditor" target="_blank" rel="noopener noreferrer"><i class="fa-brands fa-github"></i> Webeditor '+APP_VERSION+'</a>'; }
 
 	// Passe die Editoren bei Fenstergrößenänderungen an
 	window.addEventListener("resize", () =>
