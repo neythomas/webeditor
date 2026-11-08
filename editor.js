@@ -320,9 +320,12 @@ console.log("Hallo JavaScript!");`;
 			.replace(/^-+|-+$/g, "")
 			.slice(0, 80) || "Webseitenprojekt";
 
-		const blob = await zip.generateAsync({ type: "blob" });
-
-		downloadFile(`${safeFileName}.zip`, blob, "application/zip");
+		try {
+			const blob = await zip.generateAsync({ type: "blob" });
+			downloadFile(`${safeFileName}.zip`, blob, "application/zip");
+		} catch {
+			alert("Das ZIP-Projekt konnte nicht erstellt werden.");
+		}
 	});
 
 	// Nutze die Beautify-Extension, um Code aufzuräumen
@@ -381,20 +384,24 @@ console.log("Hallo JavaScript!");`;
 		});
 
 		// Gewählten Modus lokal speichern
-		localStorage.setItem("webeditor-theme", dark ? "dark" : "light");
+		try {
+			localStorage.setItem("webeditor-theme", dark ? "dark" : "light");
+		} catch {
+			saveStatus.textContent = "Einstellungen konnten nicht lokal gespeichert werden";			
+		}
 	}
 
 	const themeToggle = document.getElementById("themeToggle");
 
 	// Gespeicherten Modus beim Laden wiederherstellen
-	const savedTheme = localStorage.getItem("webeditor-theme");
+	let savedTheme = "light";
 
+	try {
+		savedTheme = localStorage.getItem("webeditor-theme") || "light";
+	} catch { }
+	
+	// Standardmäßig helles Theme verwenden
 	setTheme(savedTheme === "dark");
-
-	themeToggle.addEventListener("click", () => {
-		const dark = !document.body.classList.contains("dark-theme");
-		setTheme(dark);
-	});
 
 	// Projektnamen bei Änderungen automatisch speichern
 	projectTitleInput.addEventListener("input", () => {
@@ -416,7 +423,7 @@ console.log("Hallo JavaScript!");`;
 		const versionElement = document.getElementById("versionInfo");
 
 		if (versionElement) {
-			versionElement.innerHTML = '<a href="https://github.com/neythomas/webeditor"><i class="fa-brands fa-github"></i> Webeditor v. '+APP_VERSION+'</a>';
+			versionElement.innerHTML = '<a href="https://github.com/neythomas/webeditor"><i class="fa-brands fa-github"></i> Webeditor '+APP_VERSION+'</a>';
 		}
 	});
 
