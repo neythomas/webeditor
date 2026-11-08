@@ -1,6 +1,8 @@
 (() => {
 	"use strict";
 
+	const APP_VERSION = "1.1.2";
+
 	// Start-HTML (HTML-Grundgerüst als Vorlage beim Start)
 	const START_HTML = `<!DOCTYPE html>
 <html lang="de">
@@ -408,6 +410,15 @@ console.log("Hallo JavaScript!");`;
 	loadLocally();
 	saveStatus.textContent = "Gespeichert";
 	updatePreview();
+
+	// Zeige die Versionsnummer in der Statusleiste an
+	document.addEventListener("DOMContentLoaded", () => {
+		const versionElement = document.getElementById("versionInfo");
+
+		if (versionElement) {
+			versionElement.innerHTML = '<a href="https://github.com/neythomas/webeditor"><i class="fa-brands fa-github"></i> Webeditor v. '+APP_VERSION+'</a>';
+		}
+	});
 
 	// Passe die Editoren bei Fenstergrößenänderungen an
 	window.addEventListener("resize", () =>
