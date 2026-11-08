@@ -2,7 +2,7 @@
 
 Ein einfacher Webeditor für HTML, CSS und JavaScript mit Live-Vorschau zum Einsatz im Schulunterricht.
 
-![Screenshot des Webeditors](https://informatik.thomas-ney.net/html/screenshot.png)
+![Screenshot des Webeditors](https://informatik.thomas-ney.net/html/screenshot_v1_2.png)
 
 [Live-Demo](https://informatik.thomas-ney.net/html)
 
@@ -13,7 +13,7 @@ Ein einfacher Webeditor für HTML, CSS und JavaScript mit Live-Vorschau zum Eins
 * Syntaxhighlighting, Syntaxüberprüfung und Syntaxvervollständigung
 * Code-Verschönerung auf Knopfdruck
 * Automatische Zwischenspeicherung im lokalen Browserspeicher
-* Downloadmöglichkeit für einzelne Dateien oder das gesamte Projekt als ZIP-Datei
+* Up- und Downloadmöglichkeit für einzelne Dateien oder das gesamte Projekt als ZIP-Datei
 * reduzierte Benutzeroberfläche, Editoren nach Bedarf aus- und einklappbar, aktivierbarer Dark-Mode
 
 ## Installation
