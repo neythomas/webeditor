@@ -313,14 +313,22 @@ iframe {
 	color: var(--statusbar-text);
 	font-size: .7rem;
 }
+.statusbar a {
+	color: var(--statusbar-text);
+	text-decoration: none;
+}
+.statusbar a:hover { color: var(--accent); }
 
 /* Auf kleineren Displays: Editor und Vorschau vertikal anordnen */
 @media (max-width: 56rem) {
-	.topbar { gap: var(--space-2); }
+	body { height: 100dvh; min-height: 0; overflow: hidden; }
+	.topbar { gap: var(--space-2); flex: 0 0 auto; }
 	.toolbar { margin-left: 0; }
-	.workspace { flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
+	.workspace { flex: 1 1 0; min-height: 0; flex-direction: column; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    .app-shell { flex: 1 1 0; min-height: 0; overflow: hidden; }
 	.editors { flex: 0 0 auto; min-height: 24rem; height: 58vh;	height: 58dvh; max-height: 42rem; }
 	.preview-panel { flex: 0 0 auto; min-height: 20rem;	height: 52vh; height: 52dvh; max-height: 38rem;	}
+	.statusbar { flex: 0 0 auto; }
 }
 @media (max-width: 38rem) {
 	.topbar { align-items: center; padding: var(--space-2); }
