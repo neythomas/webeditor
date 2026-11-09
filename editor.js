@@ -1,7 +1,7 @@
 (() => {
 	"use strict";
 
-	const APP_VERSION = "1.2.0";
+	const APP_VERSION = "1.2.1";
 	const SAVE_DELAY = 500;						// Wartezeit nach letzter Änderung für die Auto-Speicherung
 	const MAX_FILESIZE = 10 * 1024 * 1024;		// Maximale Dateigröße von ZIP-Archiven für Upload
 	
@@ -507,6 +507,12 @@ console.log("Hallo JavaScript!");`;
 	
 	// Standardmäßig helles Theme verwenden
 	setTheme(savedTheme === "dark");
+	
+	// Light- und Darkmode per Button umschalten
+	themeToggle.addEventListener("click", () => {
+		const isDark = document.body.classList.contains("dark-theme");
+		setTheme(!isDark);
+	});
 
 	// Projektnamen bei Änderungen automatisch speichern
 	projectTitleInput.addEventListener("input", () => {
