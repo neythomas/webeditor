@@ -31,7 +31,7 @@ einfach in ein öffentlich zugängliches Verzeichnis auf deinem Webserver oder l
 Der Standard-Quelltext aller drei Editorfenster lässt sich über die Konstanten `START_HTML`, `START_CSS` und `START_JS` in der Datei `editor.js` anpassen.
 
 **Hinweis:** In der hier veröffentlichten Version werden die Bibliotheken über öffentliche CDNs eingebunden. Für den Einsatz in der Schule empfiehlt es sich, aus Datenschutzgründen die entsprechenden Bibliotheken lokal bereitzustellen. Der Editor funktioniert dann auch ohne bestehende Internetverbindung. 
-Dies kann auch hilfreich sein, wenn das Nachladen separater Scripts durch ACE durch zu restriktive Content Security Policies unterbunden wird und die Ausführung des Editors Fehler verursacht. Alternativ kann es in diesem Fall auch hilfreich sein, den Befehl `editor.session.setUseWorker(false);` in den Voreinstellungen des ACE-Editors (am Anfang der Datei `editor.js`) zu aktivieren. Hierdurch werden allerdings die ACE-Worker (u. A. für die Syntaxüberprüfung genutzt) deaktiviert.
+Dies kann auch hilfreich sein, wenn das Nachladen separater Ace-Scripts durch zu restriktive Content Security Policies unterbunden wird und die Ausführung des Editors Fehler verursacht. Alternativ kann es in diesem Fall auch hilfreich sein, den Befehl `editor.session.setUseWorker(false);` in den Voreinstellungen des ACE-Editors (am Anfang der Datei `editor.js`) zu aktivieren. Hierdurch wird allerdings der ACE-Worker (u. A. für die Syntaxüberprüfung genutzt) deaktiviert.
 
 ## Lizenz
 
