@@ -45,6 +45,6 @@ Verwendete Ressourcen:
 
 * [Ace](https://ace.c9.io/)
 * [JSZip](https://stuk.github.io/jszip/)
-* [Lato](https://fonts.google.com/specimen/Lato) und [Roboto Slab](https://fonts.google.com/specimen/Roboto+Slab) von [Google Fonts](https://fonts.google.com)
+* [Lato](https://fonts.google.com/specimen/Lato) und [Roboto Slab](https://fonts.google.com/specimen/Roboto+Slab)
 * [FontAwesome](https://fontawesome.com/)
 
