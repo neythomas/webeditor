@@ -334,6 +334,8 @@ console.log("Hallo JavaScript!");`;
 				button.title = collapsed
 					? `${name.toUpperCase()}-Editor ausklappen`
 					: `${name.toUpperCase()}-Editor einklappen`;
+					
+				button.setAttribute("aria-label", button.title);
 
 				button.innerHTML = collapsed
 					? '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
@@ -361,6 +363,8 @@ console.log("Hallo JavaScript!");`;
 			button.title = collapsed
 				? `${name.toUpperCase()}-Editor ausklappen`
 				: `${name.toUpperCase()}-Editor einklappen`;
+				
+			button.setAttribute("aria-label", button.title);
 
 			button.innerHTML = collapsed
 				? '<i class="fa-solid fa-chevron-down" aria-hidden="true"></i>'
