@@ -224,7 +224,7 @@ button {
 	border: 1px solid var(--line);
 	border-radius: .5rem;
 }
-.editor-panel { flex: 1 1 0; }
+.editor-panel { flex: 1 1 0; transition: flex 200ms ease-in-out; }
 .editor-panel.collapsed { flex: 0 0 2.4rem; }
 .editor-panel.collapsed .ace-editor { display: none; }
 .preview-panel { flex: 1 1 0; }
