@@ -1,7 +1,7 @@
 (() => {
 	"use strict";
 
-	const APP_VERSION = "1.2.1";
+	const APP_VERSION = "1.2.2";
 	const SAVE_DELAY = 500;						// Wartezeit nach letzter Änderung für die Auto-Speicherung
 	const MAX_FILESIZE = 10 * 1024 * 1024;		// Maximale Dateigröße von ZIP-Archiven für Upload
 	
@@ -140,13 +140,24 @@ console.log("Hallo JavaScript!");`;
 		}
 		if (!confirm(`Möchten Sie das aktuelle Projekt durch „${file.name}“ ersetzen?`)) return;
 		try {
-			// ZIP laden und Prüfsumme kontrollieren
-			const zip = await JSZip.loadAsync(file, { checkCRC32: true });
+			// ZIP laden ohne Prüfsumme zu kontrollieren, um ein unnötges Entpacken des gesamten Archivs zu verhindern
+			const zip = await JSZip.loadAsync(file, { checkCRC32: false });
+			
+			// Anzahl der Dateien und Verzeichnisse im ZIP-Archiv begrenzen
+			const MAX_ZIP_ENTRIES = 100;
+			if (Object.keys(zip.files).length > MAX_ZIP_ENTRIES) {
+				throw new Error("Das ZIP-Archiv enthält zu viele Einträge.");
+			}
 			
 			// Suche nach den passenden Dateinamen im Root der ZIP
-			const htmlFile = zip.file("index.html");
-			const cssFile = zip.file("style.css");
-			const jsFile = zip.file("script.js");
+			const getZipFile = name => {
+				const entry = zip.file(name);
+				return entry && !entry.dir ? entry : null;	// Verzeichnisse ausschließen
+			};
+
+			const htmlFile = getZipFile("index.html") || getZipFile("index.htm");
+			const cssFile = getZipFile("style.css");
+			const jsFile = getZipFile("script.js");
 
 			// Prüfen, ob mindestens eine der erwarteten Dateien vorhanden ist.
 			if (!htmlFile && !cssFile && !jsFile) {
@@ -233,10 +244,10 @@ console.log("Hallo JavaScript!");`;
 
 	// Aktualisiere die Vorschau (inkl. Statusanzeige)
 	function updatePreview() {
-		status.textContent = "Aktualisiere...";
+		status.innerHTML = '<i class="fa-solid fa-rotate"></i> Aktualisiere...';
 
 		frame.onload = () => {
-			status.textContent = "Aktuell";
+			status.innerHTML = '<i class="fa-solid fa-check"></i> Aktuell';
 		};
 
 		frame.srcdoc = createPreviewDocument();
