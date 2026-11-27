@@ -26,13 +26,13 @@
 	--panel-header-line: #e8edf2;
 	--panel-title-text: #3d4a5e;
 	--panel-meta-text: #a0a9b8;
-	--panel-button-text: #77859a;
+	--panel-button-text: #647084;
 	--panel-button-hover-bg: #f0f3f8;
 
 	/* Status */
-	--status-text: #2a9c67;
+	--status-text: #20734d;
 	--status-bg: #e9f8ef;
-	--statusbar-text: #99a3b3;
+	--statusbar-text: #647084;
 
 	/* Abstände */
 	--space-1: .25rem;
@@ -48,7 +48,7 @@ body.dark-theme {
 	--surface-alt: #273244;
 	--line: #374151;
 	--text: #f3f4f6;
-	--accent: #5b84ff;
+	--accent: #4266d5;
 
 	/* Akzentfarben */
 	--brand-mark-bg: #293653;
