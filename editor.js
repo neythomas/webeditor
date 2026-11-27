@@ -1,7 +1,7 @@
 (() => {
 	"use strict";
 
-	const APP_VERSION = "1.2.2";
+	const APP_VERSION = "1.2.3";
 	const SAVE_DELAY = 500;						// Wartezeit nach letzter Änderung für die Auto-Speicherung
 	const MAX_FILESIZE = 10 * 1024 * 1024;		// Maximale Dateigröße von ZIP-Archiven für Upload
 	
@@ -155,7 +155,7 @@ console.log("Hallo JavaScript!");`;
 				return entry && !entry.dir ? entry : null;	// Verzeichnisse ausschließen
 			};
 
-			const htmlFile = getZipFile("index.html") || getZipFile("index.htm");
+			const htmlFile = getZipFile("index.html");
 			const cssFile = getZipFile("style.css");
 			const jsFile = getZipFile("script.js");
 
@@ -165,11 +165,12 @@ console.log("Hallo JavaScript!");`;
 				return;
 			}
 
-			// Vorhandene Dateien als Text einlesen (Nicht vorhandene Dateien bleiben im jeweiligen Editor unverändert)
-			const imported = {};
-			if (htmlFile) imported.html = await htmlFile.async("string");
-			if (cssFile) imported.css = await cssFile.async("string");
-			if (jsFile) imported.js = await jsFile.async("string");
+			// Vorhandene Dateien als Text einlesen; fehlende Dateien leeren den jeweiligen Editor.
+			const imported = {
+				html: htmlFile ? await htmlFile.async("string") : "",
+				css: cssFile ? await cssFile.async("string") : "",
+				js: jsFile ? await jsFile.async("string") : ""
+			};
 
 			// Die eingelesenen Inhalte den passenden Editoren zuweisen.
 			for (const [type, content] of Object.entries(imported)) {
@@ -191,7 +192,7 @@ console.log("Hallo JavaScript!");`;
 				!cssFile && "style.css",
 				!jsFile && "script.js"
 			].filter(Boolean);
-			if (missing.length) alert(`ZIP-Projekt geladen. Folgende Inhalte konnten nicht geladen werden: ${missing.join(", ")}`);
+			if (missing.length) alert(`ZIP-Projekt geladen. Folgende Dateien konnten nicht geladen werden: ${missing.join(", ")}`);
 		} catch {
 			alert("Die ZIP-Datei ist ungültig oder konnte nicht gelesen werden.");
 		}
