@@ -3,7 +3,7 @@
 
 	const APP_VERSION = "1.2.3";
 	const SAVE_DELAY = 500;						// Wartezeit nach letzter Änderung für die Auto-Speicherung
-	const MAX_FILESIZE = 10 * 1024 * 1024;		// Maximale Dateigröße von ZIP-Archiven für Upload
+	const MAX_FILESIZE = 10 * 1024 * 1024;		// Maximale Dateigröße für Upload
 	
 	// Start-HTML (HTML-Grundgerüst als Vorlage beim Start)
 	const START_HTML = `<!DOCTYPE html>
@@ -100,6 +100,12 @@ console.log("Hallo JavaScript!");`;
 			fileInput.value = ""; // Löschen, um erneute Auswahl derselben Datei zu erlauben
 			
 			if (!file) return;
+
+			// Brich den Upload bei zu großen Dateien ab
+			if (file.size > MAX_FILESIZE) {
+				alert("Die Datei ist zu groß und wird nicht geöffnet.");
+				return;
+			}
 			
 			// Überschreiben bestätigen
 			if (!confirm(`Möchten Sie den ${label}-Editor durch „${file.name}“ ersetzen?`)) return;
@@ -245,10 +251,10 @@ console.log("Hallo JavaScript!");`;
 
 	// Aktualisiere die Vorschau (inkl. Statusanzeige)
 	function updatePreview() {
-		status.innerHTML = '<i class="fa-solid fa-rotate"></i> Aktualisiere...';
+		status.innerHTML = '<i class="fa-solid fa-rotate" aria-hidden="true"></i> Aktualisiere...';
 
 		frame.onload = () => {
-			status.innerHTML = '<i class="fa-solid fa-check"></i> Aktuell';
+			status.innerHTML = '<i class="fa-solid fa-check" aria-hidden="true"></i> Aktuell';
 		};
 
 		frame.srcdoc = createPreviewDocument();
@@ -264,6 +270,13 @@ console.log("Hallo JavaScript!");`;
 			saveStatus.textContent = "Der lokale Speicher ist nicht verfügbar!";
 		}
 	}
+	
+	// Ausstehende Änderungen beim Verlassen oder Verbergen der Seite sichern.
+	window.addEventListener("pagehide", saveLocally);
+
+	document.addEventListener("visibilitychange", () => {
+		if (document.visibilityState === "hidden") { saveLocally();	}
+	});
 
 	// Lade Inhalte aus lokalem Speicher
 	function loadLocally() {
@@ -475,6 +488,8 @@ console.log("Hallo JavaScript!");`;
 		editors.html.setValue(START_HTML, -1);
 		editors.css.setValue(START_CSS, -1);
 		editors.js.setValue(START_JS, -1);
+		
+		window.clearTimeout(debounceTimer);
 
 		// Lokalen Speicher überschreiben und Vorschau aktualisieren
 		saveLocally();
@@ -508,7 +523,7 @@ console.log("Hallo JavaScript!");`;
 		try {
 			localStorage.setItem("webeditor-theme", dark ? "dark" : "light");
 		} catch {
-			saveStatus.textContent = "Einstellungen konnten nicht lokal gespeichert werden";			
+			saveStatus.textContent = "Editor-Einstellungen konnten nicht lokal gespeichert werden";			
 		}
 	}
 
